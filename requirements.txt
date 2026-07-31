@@ -1,0 +1,7 @@
+numpy
+pandas
+matplotlib
+jupyter
+fastapi
+uvicorn
+mlflow
