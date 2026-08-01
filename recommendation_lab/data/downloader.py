@@ -10,6 +10,8 @@ import urllib.request
 import zipfile
 from pathlib import Path
 
+from recommendation_lab.config import DATA_DIR
+
 
 # base url for our datasource
 BASE_URL = "https://files.grouplens.org/datasets/movielens"
@@ -93,7 +95,7 @@ def _extract(
 
 # public fn used to download and validate the dataset with idempotency handling to avoid duplicate or redownloads
 def download_dataset(
-    name: str, data_dir: str = "data", force: bool = False
+    name: str, data_dir: str | Path = DATA_DIR, force: bool = False
 ) -> Path:
     """Download and extract a dataset into data_dir.
 
@@ -135,7 +137,9 @@ def main() -> None:
         choices=sorted(DATASET_REGISTRY),
     )
     parser.add_argument(
-        "--data-dir", default="data", help="Directory to download into (default: data)"
+        "--data-dir",
+        default=str(DATA_DIR),
+        help="Directory to download into (default: project data dir)",
     )
     parser.add_argument(
         "--force",
