@@ -28,16 +28,33 @@ class PopularityRecommender(BaseRecommender):
 
     def fit(self, train: pd.DataFrame) -> BaseRecommender:
         self.train = train
+        
+        # calculate average of all the ratings in our training data (GM)
         self.global_mean = train["rating"].mean()
+        
+        # count each movie(N)
         counts = train["movie_id"].value_counts()
+        
+        # assign popularity based on the counts if metric is count
         if self.metric == "count":
             self.popularity = counts
-        elif self.metric == "mean":
+            
+        # assign the popularity based on the average rating of each movie
+        elif self.metric == "mean": 
             self.popularity = train.groupby("movie_id")["rating"].mean()
+            
+        # a Bayesian average (shrinkage toward the global mean). Each movie's score pulls its observed mean toward the global mean by an amount controlled by m.
         else:
+            # means = each movie's average rating in train.(M)
             means = train.groupby("movie_id")["rating"].mean()
+            
+            
             m = BAYESIAN_M
+            
+            # formulation: (N x M + m x GM) / (N + m)
             self.popularity = (counts * means + m * self.global_mean) / (counts + m)
+            
+        # order by descending
         self.popularity = self.popularity.sort_values(ascending=False)
         return self
 
@@ -54,8 +71,12 @@ class PopularityRecommender(BaseRecommender):
         self._require_fit()
         rated = set(self.train.loc[self.train["user_id"] == user_id, "movie_id"])
         pool = self.popularity.index
+        
+        # if a candidates set is supplied, restrict the pool to items in it (the evaluation passes all items minus the user's train items).
         if candidates is not None:
             pool = pool.intersection(candidates)
+            
+        # exclude movies the user has already seen (rated in train)
         ranked = [m for m in pool if m not in rated]
         return ranked[:k]
 
